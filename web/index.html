@@ -19,7 +19,6 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,37 +31,8 @@
 
   <title>tetris</title>
   <link rel="manifest" href="manifest.json">
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background-color: black;
-    }
-    #flutter_target {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  </style>
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function() {
-      window.addEventListener('resize', function() {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(function(registration) {
-            registration.active.postMessage({ type: 'WINDOW_RESIZE' });
-          });
-        }
-      });
-    });
-  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

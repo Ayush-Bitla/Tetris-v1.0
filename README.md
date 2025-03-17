@@ -1,10 +1,5 @@
 # Flutter Tetris Game
 
-[Tetris](https://harddrop.com/wiki/Gameplay_overview) implementation
-with [SRS](https://harddrop.com/wiki/SRS)
-and [wall kicks](https://harddrop.com/wiki/SRS#Wall_Kicks)
-. [Try it](https://ayush-bitla.github.io/Tetris/). 
-
 This is a simple Tetris game built purely in Flutter, without using any third-party packages. The game consists of a grid where Tetromino pieces appear and fall. The player can move and rotate the pieces to fit them together. The goal is to create full horizontal lines, which will then clear and grant points.
 
 ## 📌 Features
@@ -83,7 +78,7 @@ The `build()` method constructs the game UI:
 - Score counter
 - Control buttons
 
-[![gameplay](assets/code/Tetris.gif)](https://ayush-bitla.github.io/Tetris/)
+[![gameplay](assets/tetris.gif)]
 
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
