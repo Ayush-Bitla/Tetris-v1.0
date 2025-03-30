@@ -89,19 +89,23 @@ class _GameBoardState extends State<GameBoard> {
   
   // Initialize audio players
   Future<void> initAudioPlayers() async {
-    // Set volume for all players
-    movePlayer.setVolume(0.5);
-    rotatePlayer.setVolume(0.5);
-    dropPlayer.setVolume(0.7);
-    clearLinePlayer.setVolume(0.7);
-    gameOverPlayer.setVolume(0.8);
-    
-    // Preload sound assets
-    await movePlayer.setSource(AssetSource('sounds/move.wav'));
-    await rotatePlayer.setSource(AssetSource('sounds/rotate.wav'));
-    await dropPlayer.setSource(AssetSource('sounds/drop.wav'));
-    await clearLinePlayer.setSource(AssetSource('sounds/clear.wav'));
-    await gameOverPlayer.setSource(AssetSource('sounds/gameover.wav'));
+    try {
+      // Set volume for all players
+      movePlayer.setVolume(0.5);
+      rotatePlayer.setVolume(0.5);
+      dropPlayer.setVolume(0.7);
+      clearLinePlayer.setVolume(0.7);
+      gameOverPlayer.setVolume(0.8);
+      
+      // Preload sound assets
+      await movePlayer.setSource(AssetSource('sounds/move.wav'));
+      await rotatePlayer.setSource(AssetSource('sounds/rotate.wav'));
+      await dropPlayer.setSource(AssetSource('sounds/drop.wav'));
+      await clearLinePlayer.setSource(AssetSource('sounds/clear.wav'));
+      await gameOverPlayer.setSource(AssetSource('sounds/gameover.wav'));
+    } catch (e) {
+      print('Audio initialization error: $e');
+    }
   }
   
   // Check for haptic feedback support
@@ -406,7 +410,7 @@ class _GameBoardState extends State<GameBoard> {
       
       // Play game over sound
       if (gameOverPlayer != null && _soundEnabled) {
-        gameOverPlayer.resume();
+        gameOverPlayer.play(AssetSource('sounds/gameover.wav'));
       }
       
       // Show game over dialog
@@ -425,7 +429,7 @@ class _GameBoardState extends State<GameBoard> {
         updateGhostPosition();
         
         // Play move sound
-        movePlayer.resume();
+        movePlayer.play(AssetSource('sounds/move.wav'));
         
         // Trigger haptic feedback if available
         // if (hasVibrator) {
@@ -446,7 +450,7 @@ class _GameBoardState extends State<GameBoard> {
         updateGhostPosition();
         
         // Play move sound
-        movePlayer.resume();
+        movePlayer.play(AssetSource('sounds/move.wav'));
         
         // Trigger haptic feedback if available
         // if (hasVibrator) {
@@ -465,7 +469,7 @@ class _GameBoardState extends State<GameBoard> {
       updateGhostPosition();
       
       // Play rotate sound
-      rotatePlayer.resume();
+      rotatePlayer.play(AssetSource('sounds/rotate.wav'));
       
       // Trigger haptic feedback if available
       // if (hasVibrator) {
@@ -513,7 +517,7 @@ class _GameBoardState extends State<GameBoard> {
     
     // Play sound if any lines were cleared
     if (linesCleared) {
-      clearLinePlayer.resume();
+      clearLinePlayer.play(AssetSource('sounds/clear.wav'));
       
       // Trigger haptic feedback if available
       // if (hasVibrator) {
@@ -567,7 +571,7 @@ class _GameBoardState extends State<GameBoard> {
   // Fast drop functionality
   void fastDrop() {
     // Play drop sound
-    dropPlayer.resume();
+    dropPlayer.play(AssetSource('sounds/drop.wav'));
     
     // Trigger haptic feedback if available
     // if (hasVibrator) {
