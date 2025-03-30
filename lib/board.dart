@@ -38,6 +38,9 @@ class GameBoard extends StatefulWidget {
 class _GameBoardState extends State<GameBoard> {
   //current tetris piece
   Piece currentPiece = Piece(type: Tetromino.L);
+  
+  //next tetris piece
+  Piece? nextPiece;
 
   // current score
   int currentScore = 0;
@@ -128,7 +131,11 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void startGame() {
+    // Generate the first piece
     currentPiece.initializePiece();
+    
+    // Generate the next piece
+    _generateNextPiece();
 
     // Calculate frame rate based on level
     Duration frameRate = Duration(milliseconds: max(100, 800 - ((level - 1) * 100)));
@@ -355,16 +362,29 @@ class _GameBoardState extends State<GameBoard> {
     return false; // no collision with landed pieces
   }
 
+  // Generate next random piece
+  void _generateNextPiece() {
+    Random rand = Random();
+    Tetromino randomType = Tetromino.values[rand.nextInt(Tetromino.values.length)];
+    nextPiece = Piece(type: randomType);
+    nextPiece!.initializePiece();
+  }
+
   // CREATE NEW TETRIS PIECE
   void createNewPiece() {
-    // create random object to generate random tetris piece
-    Random rand = Random();
+    // Set current piece to next piece
+    if (nextPiece != null) {
+      currentPiece = nextPiece!;
+    } else {
+      // Fallback for first game initialization
+      Random rand = Random();
+      Tetromino randomType = Tetromino.values[rand.nextInt(Tetromino.values.length)];
+      currentPiece = Piece(type: randomType);
+      currentPiece.initializePiece();
+    }
 
-    // create a new piece with random type
-    Tetromino randomType =
-        Tetromino.values[rand.nextInt(Tetromino.values.length)];
-    currentPiece = Piece(type: randomType);
-    currentPiece.initializePiece();
+    // Generate new next piece
+    _generateNextPiece();
 
     // Immediately check if game is over with the new piece
     if (isGameOver()) {
@@ -563,6 +583,70 @@ class _GameBoardState extends State<GameBoard> {
     clearLines();
   }
 
+  // Add method to draw the next piece preview
+  Widget _buildNextPiecePreview() {
+    if (nextPiece == null) return Container();
+    
+    // Create a small grid to show the next piece
+    // The grid should be a 4x4 grid centered on the piece
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.white24, width: 2),
+      ),
+      child: GridView.builder(
+        padding: const EdgeInsets.all(2),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 16, // 4x4 grid
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 1,
+        ),
+        itemBuilder: (context, index) {
+          // Translate the next piece's position to fit this small preview grid
+          List<int> relativePositions = [];
+          
+          switch (nextPiece!.type) {
+            case Tetromino.L:
+              relativePositions = [5, 9, 13, 14]; // L shape in a 4x4 grid
+              break;
+            case Tetromino.J:
+              relativePositions = [6, 10, 14, 13]; // J shape
+              break;
+            case Tetromino.I:
+              relativePositions = [4, 5, 6, 7]; // I shape
+              break;
+            case Tetromino.O:
+              relativePositions = [5, 6, 9, 10]; // O shape
+              break;
+            case Tetromino.S:
+              relativePositions = [5, 6, 8, 9]; // S shape
+              break;
+            case Tetromino.Z:
+              relativePositions = [4, 5, 9, 10]; // Z shape
+              break;
+            case Tetromino.T:
+              relativePositions = [5, 8, 9, 10]; // T shape
+              break;
+            default:
+              break;
+          }
+          
+          // Display the piece in the preview
+          if (relativePositions.contains(index)) {
+            return Pixel(color: tetrominoColors[nextPiece!.type]);
+          } else {
+            // Use the same pixel style as the main board for consistency
+            return Pixel(color: Colors.grey[800]);
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -676,6 +760,34 @@ class _GameBoardState extends State<GameBoard> {
                                     return Pixel(color: Colors.grey[900]);
                                   }
                                 },
+                              ),
+                              // Next piece display - positioned on the right side
+                              Positioned(
+                                top: 10,
+                                right: 0,
+                                child: Container(
+                                  width: 100,
+                                  padding: const EdgeInsets.all(5.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      const Text(
+                                        'NEXT',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildNextPiecePreview(),
+                                    ],
+                                  ),
+                                ),
                               ),
                               // Overlay when game is paused
                               if (isPaused)
