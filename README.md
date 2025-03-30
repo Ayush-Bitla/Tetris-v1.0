@@ -6,7 +6,7 @@ A classic Tetris game built with Flutter.
 with [SRS](https://harddrop.com/wiki/SRS)
 and [wall kicks](https://harddrop.com/wiki/SRS#Wall_Kicks).
 
-[![Gameplay Demo](assets/code/Tetris.gif)](https://ayush-bitla.github.io/Tetris-v1.0/)
+[![Gameplay Demo](assets/code/Tetris-v1.gif)](https://ayush-bitla.github.io/Tetris-v1.0/)
 
 ## Play Online
 
