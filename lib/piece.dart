@@ -63,10 +63,10 @@ class Piece {
         break;
       case Tetromino.Z:
         position = [
+          -17,
           -16,
-          -15,
+          -6,
           -5,
-          -4,
         ];
         break;
       case Tetromino.T:
