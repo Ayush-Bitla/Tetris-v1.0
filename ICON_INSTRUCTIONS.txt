@@ -1,0 +1,11 @@
+Steps to add the T-shaped icon to your Tetris app:
+
+1. Save the turquoise T-shaped image from your message as "tetris_icon.png"
+2. Create the folder "assets/icons/" if it doesn't exist yet
+3. Place the "tetris_icon.png" file in the "assets/icons/" folder
+4. Run the following commands to generate icons for all platforms:
+
+   flutter pub get
+   flutter pub run flutter_launcher_icons
+
+This will update your app icon on Android, iOS, web, Windows, and macOS platforms. 

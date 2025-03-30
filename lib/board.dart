@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:tetris/piece.dart';
 import 'package:tetris/pixel.dart';
 import 'package:tetris/values.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /*
 
@@ -36,6 +38,9 @@ class _GameBoardState extends State<GameBoard> {
 
   // current score
   int currentScore = 0;
+  
+  // high score
+  int highScore = 0;
 
   // game over status
   bool gameOver = false;
@@ -44,8 +49,30 @@ class _GameBoardState extends State<GameBoard> {
   void initState() {
     super.initState();
 
+    // load high score
+    loadHighScore();
+
     //start game when app starts
     startGame();
+  }
+
+  // load high score from local storage
+  Future<void> loadHighScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      highScore = prefs.getInt('highScore') ?? 0;
+    });
+  }
+
+  // save high score to local storage
+  Future<void> saveHighScore() async {
+    if (currentScore > highScore) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('highScore', currentScore);
+      setState(() {
+        highScore = currentScore;
+      });
+    }
   }
 
   void startGame() {
@@ -83,25 +110,36 @@ class _GameBoardState extends State<GameBoard> {
 
   // game over message
   void showGameOverDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Game Over'),
-      content: Text("Your Score is: $currentScore"),
-      actions: [
-        TextButton(
-          onPressed: () {
-            // Reset the game
-            resetGame();
-            Navigator.pop(context);
-          },
-          child: const Text('Play Again'),
+    // save high score before showing dialog
+    saveHighScore();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Game Over'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Your Score: $currentScore"),
+            const SizedBox(height: 8),
+            Text("High Score: $highScore", 
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
-}
-
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Reset the game
+              resetGame();
+              Navigator.pop(context);
+            },
+            child: const Text('Play Again'),
+          ),
+        ],
+      ),
+    );
+  }
 
   // reset game
   void resetGame() {
@@ -311,7 +349,7 @@ class _GameBoardState extends State<GameBoard> {
         }
 
         //step 6: set the top row to empty
-        gameBoard[0] = List.generate(row, (index) => null);
+        gameBoard[0] = List.generate(rowLength, (index) => null);
 
         //step 7 : Increase the score!
         currentScore++;
@@ -332,94 +370,230 @@ class _GameBoardState extends State<GameBoard> {
     return false;
   }
 
+  // Add fast drop functionality
+  void fastDrop() {
+    // Start a timer to drop the piece step by step with animation
+    Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (!checkCollision(Direction.down) && !checkLanded()) {
+        setState(() {
+          currentPiece.movePiece(Direction.down);
+        });
+      } else {
+        // Stop when we hit something
+        timer.cancel();
+        // Force landing check
+        checkLanding();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      // Wrap the content in a KeyboardListener to capture keyboard events
       body: SafeArea(
-        child: Column(
-          children: [
-            //GAME GRID
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 2/3,
-                  child: GridView.builder(
-                    itemCount: rowLength * colLength,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: rowLength,
-                      childAspectRatio: 1,
+        child: RawKeyboardListener(
+          // Set focus to capture key events
+          autofocus: true,
+          focusNode: FocusNode(),
+          // Handle keyboard events
+          onKey: (RawKeyEvent event) {
+            if (event is RawKeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                moveLeft();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                moveRight();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                rotatePiece();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                // Move down once
+                if (!checkCollision(Direction.down)) {
+                  setState(() {
+                    currentPiece.movePiece(Direction.down);
+                  });
+                }
+              } else if (event.logicalKey == LogicalKeyboardKey.space) {
+                // Fast drop with space bar
+                fastDrop();
+              }
+            }
+          },
+          // Wrap with GestureDetector to support touch controls
+          child: GestureDetector(
+            // Swipe left to move left
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity! > 0) {
+                // Swiped right
+                moveRight();
+              } else if (details.primaryVelocity! < 0) {
+                // Swiped left
+                moveLeft();
+              }
+            },
+            // Swipe up to rotate
+            onVerticalDragEnd: (details) {
+              if (details.primaryVelocity! < 0) {
+                // Swiped up
+                rotatePiece();
+              } else if (details.primaryVelocity! > 0) {
+                // Swiped down
+                fastDrop();
+              }
+            },
+            // Tap to rotate
+            onTap: () {
+              rotatePiece();
+            },
+            child: Column(
+              children: [
+                //GAME GRID
+                Expanded(
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 2/3,
+                      child: GridView.builder(
+                        itemCount: rowLength * colLength,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: rowLength,
+                          childAspectRatio: 1,
+                        ),
+                        itemBuilder: (context, index) {
+                          //get row and column of each index
+                          int row = (index / rowLength).floor();
+                          int col = index % rowLength;
+
+                          // current piece
+                          if (currentPiece.position.contains(index)) {
+                            return Pixel(color: currentPiece.color);
+                          }
+
+                          //landed pieces
+                          else if (gameBoard[row][col] != null) {
+                            final Tetromino? tetrominoType = gameBoard[row][col];
+                            return Pixel(color: tetrominoColors[tetrominoType]);
+                          }
+
+                          //blank pixel
+                          else {
+                            return Pixel(color: Colors.grey[900]);
+                          }
+                        },
+                      ),
                     ),
-                    itemBuilder: (context, index) {
-                      //get row and column of each index
-                      int row = (index / rowLength).floor();
-                      int col = index % rowLength;
-
-                      // current piece
-                      if (currentPiece.position.contains(index)) {
-                        return Pixel(color: currentPiece.color);
-                      }
-
-                      //landed pieces
-                      else if (gameBoard[row][col] != null) {
-                        final Tetromino? tetrominoType = gameBoard[row][col];
-                        return Pixel(color: tetrominoColors[tetrominoType]);
-                      }
-
-                      //blank pixel
-                      else {
-                        return Pixel(color: Colors.grey[900]);
-                      }
-                    },
                   ),
                 ),
-              ),
-            ),
 
-            // SCORE
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: Text(
-                'Score:$currentScore',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
+                // SCORE and CONTROLS INSTRUCTIONS
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(
+                            'Score: $currentScore',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                          ),
+                          Text(
+                            'High Score: $highScore',
+                            style: const TextStyle(
+                              color: Colors.amber,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.orangeAccent,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 0),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      MediaQuery.of(context).size.width > 600
+                          ? const Text(
+                              'Keyboard: ←→ to move, ↑ to rotate, ↓ to move down, Space to drop',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            )
+                          : const Text(
+                              'Swipe: ←→ to move, ↑ to rotate, ↓ to drop, Tap to rotate',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
 
-            // GAME CONTROLS
-            Padding(
-              padding: const EdgeInsets.only(bottom: 40.0, top: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  //left
-                  IconButton(
-                    onPressed: moveLeft,
-                    color: Colors.white,
-                    iconSize: 30,
-                    icon: const Icon(Icons.arrow_back_ios),
+                // GAME CONTROLS (visible buttons for mobile/touch)
+                Container(
+                  padding: const EdgeInsets.only(bottom: 40.0, top: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  //rotate
-                  IconButton(
-                    onPressed: rotatePiece,
-                    color: Colors.white,
-                    iconSize: 30,
-                    icon: const Icon(Icons.rotate_right),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Top row for rotation button
+                      IconButton(
+                        onPressed: rotatePiece,
+                        color: Colors.white,
+                        iconSize: 30,
+                        icon: const Icon(Icons.rotate_right),
+                        tooltip: 'Rotate',
+                      ),
+                      const SizedBox(height: 10),
+                      // Bottom row for direction controls
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          //left
+                          IconButton(
+                            onPressed: moveLeft,
+                            color: Colors.white,
+                            iconSize: 30,
+                            icon: const Icon(Icons.arrow_back_ios),
+                            tooltip: 'Move Left',
+                          ),
+                          const SizedBox(width: 20),
+                          //drop
+                          IconButton(
+                            onPressed: fastDrop,
+                            color: Colors.white,
+                            iconSize: 30,
+                            icon: const Icon(Icons.arrow_downward),
+                            tooltip: 'Drop',
+                          ),
+                          const SizedBox(width: 20),
+                          //right
+                          IconButton(
+                            onPressed: moveRight,
+                            color: Colors.white,
+                            iconSize: 30,
+                            icon: const Icon(Icons.arrow_forward_ios),
+                            tooltip: 'Move Right',
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  //right
-                  IconButton(
-                    onPressed: moveRight,
-                    color: Colors.white,
-                    iconSize: 30,
-                    icon: const Icon(Icons.arrow_forward_ios),
-                  ),
-                ],
-              ),
-            )
-          ],
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );
