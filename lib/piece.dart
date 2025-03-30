@@ -428,10 +428,10 @@ class Piece {
           case 0:
             //get the new position
             newPosition = [
-              position[1] - 1,
+              position[1] - rowLength + 1,
               position[1],
+              position[1] + 1,
               position[1] + rowLength,
-              position[1] + rowLength + 1,
             ];
             // check that this new position is a valid move before assigning it to the real position
             if (piecePositionIsValid(newPosition)) {
@@ -445,9 +445,9 @@ class Piece {
           case 1:
             //assign the new position
             newPosition = [
-              position[1] - rowLength,
+              position[1] - 1,
               position[1],
-              position[1] + 1,
+              position[1] + rowLength,
               position[1] + rowLength + 1,
             ];
             // check that this new position is a valid move before assigning it to the real position
@@ -462,10 +462,10 @@ class Piece {
           case 2:
             //get the new position
             newPosition = [
-              position[1] - 1,
+              position[1] - rowLength + 1,
               position[1],
+              position[1] + 1,
               position[1] + rowLength,
-              position[1] + rowLength + 1,
             ];
             // check that this new position is a valid move before assigning it to the real position
             if (piecePositionIsValid(newPosition)) {
@@ -479,9 +479,9 @@ class Piece {
           case 3:
             //get the new position
             newPosition = [
-              position[1] - rowLength,
+              position[1] - 1,
               position[1],
-              position[1] + 1,
+              position[1] + rowLength,
               position[1] + rowLength + 1,
             ];
             // check that this new position is a valid move before assigning it to the real position
