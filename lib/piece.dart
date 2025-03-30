@@ -599,14 +599,14 @@ class Piece {
     bool lastColOccupied = false;
 
     for (int pos in piecePosition) {
-      // return false if any position is already exists
+      // return false if any position is already occupied or out of bounds
       if (!positionIsValid(pos)) {
         return false;
       }
 
-      // get the col of the position
+      // check for wall kick (pieces going through walls)
       int col = pos % rowLength;
-
+      
       // check if the first or last column is occupied
       if (col == 0) {
         firstColOccupied = true;
@@ -616,7 +616,8 @@ class Piece {
       }
     }
 
-    // if there is a piece in the last col and last col, it is going through the wall
+    // If both first and last columns are occupied, the piece is wrapping around
+    // which means it's going through a wall (invalid position)
     return !(firstColOccupied && lastColOccupied);
   }
 }

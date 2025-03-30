@@ -336,74 +336,91 @@ class _GameBoardState extends State<GameBoard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Column(
-        children: [
-          //GAME GRID
-          Expanded(
-            child: GridView.builder(
-              itemCount: rowLength * colLength,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: rowLength),
-              itemBuilder: (context, index) {
-                //get row and column of each index
-                int row = (index / rowLength).floor();
-                int col = index % rowLength;
+      body: SafeArea(
+        child: Column(
+          children: [
+            //GAME GRID
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 2/3,
+                  child: GridView.builder(
+                    itemCount: rowLength * colLength,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: rowLength,
+                      childAspectRatio: 1,
+                    ),
+                    itemBuilder: (context, index) {
+                      //get row and column of each index
+                      int row = (index / rowLength).floor();
+                      int col = index % rowLength;
 
-                // current piece
-                if (currentPiece.position.contains(index)) {
-                  return Pixel(color: currentPiece.color,); //Pixel
-                }
+                      // current piece
+                      if (currentPiece.position.contains(index)) {
+                        return Pixel(color: currentPiece.color);
+                      }
 
-                //landed pieces
-                else if (gameBoard[row][col] != null) {
-                  final Tetromino? tetrominoType = gameBoard[row][col];
-                  return Pixel(
-                      color: tetrominoColors[tetrominoType]);
-                }
+                      //landed pieces
+                      else if (gameBoard[row][col] != null) {
+                        final Tetromino? tetrominoType = gameBoard[row][col];
+                        return Pixel(color: tetrominoColors[tetrominoType]);
+                      }
 
-                //blank pixel
-                else {
-                  return Pixel(color: Colors.grey[900]);
-                }
-              },
+                      //blank pixel
+                      else {
+                        return Pixel(color: Colors.grey[900]);
+                      }
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
 
-          // SCORE
-          Text(
-            'Score:$currentScore',
-            style: const TextStyle(color: Colors.white),
-          ),
-
-          // GAME CONTROLS
-          Padding(
-            padding: const EdgeInsets.only(bottom: 50.0, top: 50),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                //left
-                IconButton(
-                  onPressed: moveLeft,
+            // SCORE
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Text(
+                'Score:$currentScore',
+                style: TextStyle(
                   color: Colors.white,
-                  icon: const Icon(Icons.arrow_back_ios),
+                  fontSize: 20,
                 ),
-                //rotate
-                IconButton(
-                  onPressed: rotatePiece,
-                  color: Colors.white,
-                  icon: const Icon(Icons.rotate_right),
-                ),
-                //right
-                IconButton(
-                  onPressed: moveRight,
-                  color: Colors.white,
-                  icon: const Icon(Icons.arrow_forward_ios),
-                ),
-              ],
+              ),
             ),
-          )
-        ],
+
+            // GAME CONTROLS
+            Padding(
+              padding: const EdgeInsets.only(bottom: 40.0, top: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  //left
+                  IconButton(
+                    onPressed: moveLeft,
+                    color: Colors.white,
+                    iconSize: 30,
+                    icon: const Icon(Icons.arrow_back_ios),
+                  ),
+                  //rotate
+                  IconButton(
+                    onPressed: rotatePiece,
+                    color: Colors.white,
+                    iconSize: 30,
+                    icon: const Icon(Icons.rotate_right),
+                  ),
+                  //right
+                  IconButton(
+                    onPressed: moveRight,
+                    color: Colors.white,
+                    iconSize: 30,
+                    icon: const Icon(Icons.arrow_forward_ios),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
