@@ -42,6 +42,9 @@ class _GameBoardState extends State<GameBoard> {
   //next tetris piece
   Piece? nextPiece;
 
+  // ghost piece positions (shadow of where piece will land)
+  List<int> ghostPositions = [];
+
   // current score
   int currentScore = 0;
   
@@ -136,6 +139,9 @@ class _GameBoardState extends State<GameBoard> {
     
     // Generate the next piece
     _generateNextPiece();
+    
+    // Initialize ghost piece position
+    updateGhostPosition();
 
     // Calculate frame rate based on level
     Duration frameRate = Duration(milliseconds: max(100, 800 - ((level - 1) * 100)));
@@ -182,6 +188,9 @@ class _GameBoardState extends State<GameBoard> {
 
       // check if piece needs to land
       checkLanding();
+      
+      // Update ghost piece positions
+      updateGhostPosition();
     });
   }
 
@@ -385,6 +394,9 @@ class _GameBoardState extends State<GameBoard> {
 
     // Generate new next piece
     _generateNextPiece();
+    
+    // Update ghost piece for the new piece
+    updateGhostPosition();
 
     // Immediately check if game is over with the new piece
     if (isGameOver()) {
@@ -409,6 +421,9 @@ class _GameBoardState extends State<GameBoard> {
       setState(() {
         currentPiece.movePiece(Direction.left);
         
+        // Update ghost piece after moving
+        updateGhostPosition();
+        
         // Play move sound
         movePlayer.resume();
         
@@ -427,6 +442,9 @@ class _GameBoardState extends State<GameBoard> {
       setState(() {
         currentPiece.movePiece(Direction.right);
         
+        // Update ghost piece after moving
+        updateGhostPosition();
+        
         // Play move sound
         movePlayer.resume();
         
@@ -442,6 +460,9 @@ class _GameBoardState extends State<GameBoard> {
   void rotatePiece() {
     setState(() {
       currentPiece.rotatePiece();
+      
+      // Update ghost piece after rotating
+      updateGhostPosition();
       
       // Play rotate sound
       rotatePlayer.resume();
@@ -558,6 +579,8 @@ class _GameBoardState extends State<GameBoard> {
       if (!checkCollision(Direction.down) && !checkLanded()) {
         setState(() {
           currentPiece.movePiece(Direction.down);
+          // Update ghost position during fast drop
+          updateGhostPosition();
         });
       } else {
         // Stop when we hit something
@@ -647,6 +670,53 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
+  // Calculate and update the ghost piece positions
+  void updateGhostPosition() {
+    // Start with the current piece's position
+    ghostPositions = List.from(currentPiece.position);
+    
+    // Create a copy of current positions to work with
+    List<int> testPositions = List.from(currentPiece.position);
+    
+    // Track how many rows down we've moved
+    int dropDistance = 0;
+    
+    // Keep moving the test positions down until collision
+    while (true) {
+      dropDistance++;
+      
+      // Calculate new test positions one row down
+      List<int> newTestPositions = testPositions.map((pos) => pos + rowLength).toList();
+      
+      // Check if new positions would collide
+      bool wouldCollide = false;
+      
+      for (int i = 0; i < newTestPositions.length; i++) {
+        // Get row and column
+        int row = (newTestPositions[i] / rowLength).floor();
+        int col = newTestPositions[i] % rowLength;
+        
+        // Check if out of bounds or overlapping with existing pieces
+        if (row >= colLength || 
+            (row >= 0 && col >= 0 && col < rowLength && gameBoard[row][col] != null)) {
+          wouldCollide = true;
+          break;
+        }
+      }
+      
+      // If would collide, keep previous positions and exit
+      if (wouldCollide) {
+        break;
+      }
+      
+      // Otherwise, update positions and continue checking
+      testPositions = newTestPositions;
+    }
+    
+    // Update ghost positions with the calculated test positions
+    ghostPositions = testPositions;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -689,6 +759,8 @@ class _GameBoardState extends State<GameBoard> {
                     if (!checkCollision(Direction.down)) {
                       setState(() {
                         currentPiece.movePiece(Direction.down);
+                        // Update ghost position when moving down
+                        updateGhostPosition();
                       });
                     }
                   } else if (event.logicalKey == LogicalKeyboardKey.space) {
@@ -747,6 +819,15 @@ class _GameBoardState extends State<GameBoard> {
                                   // current piece
                                   if (currentPiece.position.contains(index)) {
                                     return Pixel(color: currentPiece.color);
+                                  }
+                                  
+                                  // ghost piece - only show if not overlapping with current piece
+                                  else if (ghostPositions.contains(index) && 
+                                          !currentPiece.position.contains(index)) {
+                                    return Pixel(
+                                      color: currentPiece.color.withOpacity(0.2),
+                                      isGhost: true,
+                                    );
                                   }
 
                                   //landed pieces
